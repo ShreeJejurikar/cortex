@@ -544,6 +544,66 @@ class CortexCLI:
             traceback.print_exc()
             return 1
 
+    def status(self):
+        """Show system status including security features"""
+        import shutil
+
+        show_banner(show_version=True)
+        console.print()
+
+        cx_header("System Status")
+
+        # Check API key
+        is_valid, provider, _ = validate_api_key()
+        if is_valid:
+            cx_print(f"API Provider: [bold]{provider}[/bold]", "success")
+        else:
+            # Check for Ollama
+            ollama_provider = os.environ.get('CORTEX_PROVIDER', '').lower()
+            if ollama_provider == 'ollama':
+                cx_print("API Provider: [bold]Ollama (local)[/bold]", "success")
+            else:
+                cx_print("API Provider: [bold]Not configured[/bold]", "warning")
+                cx_print("  Run: cortex wizard", "info")
+
+        # Check Firejail
+        firejail_path = shutil.which('firejail')
+        if firejail_path:
+            cx_print(f"Firejail: [bold]Available[/bold] ({firejail_path})", "success")
+        else:
+            cx_print("Firejail: [bold]Not installed[/bold]", "warning")
+            cx_print("  Install: sudo apt-get install firejail", "info")
+
+        # Check Ollama
+        ollama_host = os.environ.get('OLLAMA_HOST', 'http://localhost:11434')
+        try:
+            import urllib.request
+            req = urllib.request.Request(f"{ollama_host}/api/tags", method='GET')
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                cx_print(f"Ollama: [bold]Running[/bold] ({ollama_host})", "success")
+        except Exception:
+            cx_print(f"Ollama: [bold]Not running[/bold]", "info")
+            cx_print("  Start: ollama serve", "info")
+
+        console.print()
+        cx_header("Configuration")
+
+        # Show config file location
+        config_path = os.path.expanduser('~/.cortex/config.json')
+        if os.path.exists(config_path):
+            cx_print(f"Config: {config_path}", "info")
+        else:
+            cx_print(f"Config: Not created yet", "info")
+
+        history_path = os.path.expanduser('~/.cortex/history.db')
+        if os.path.exists(history_path):
+            cx_print(f"History: {history_path}", "info")
+        else:
+            cx_print(f"History: Not created yet", "info")
+
+        console.print()
+        return 0
+
     def wizard(self):
         """Interactive setup wizard for API key configuration"""
         from pathlib import Path
@@ -707,10 +767,10 @@ def show_rich_help():
 
     table.add_row("demo", "See Cortex in action (no API key needed)")
     table.add_row("wizard", "Configure API key interactively")
+    table.add_row("status", "Show system status and security features")
     table.add_row("install <pkg>", "Install software using natural language")
     table.add_row("history", "View installation history")
     table.add_row("rollback <id>", "Undo an installation")
-    table.add_row("check-pref", "View configuration")
 
     console.print(table)
     console.print()
@@ -764,6 +824,9 @@ Environment Variables:
     # Wizard command
     wizard_parser = subparsers.add_parser('wizard', help='Configure API key interactively')
 
+    # Status command
+    status_parser = subparsers.add_parser('status', help='Show system status and security features')
+
     # Install command
     install_parser = subparsers.add_parser('install', help='Install software using natural language')
     install_parser.add_argument('software', type=str, help='Software to install (natural language)')
@@ -808,6 +871,8 @@ Environment Variables:
             return cli.demo()
         elif args.command == 'wizard':
             return cli.wizard()
+        elif args.command == 'status':
+            return cli.status()
         elif args.command == 'install':
             return cli.install(args.software, execute=args.execute, dry_run=args.dry_run)
         elif args.command == 'history':
