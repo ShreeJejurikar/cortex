@@ -1,5 +1,4 @@
 from intent.detector import Intent
-from typing import list
 
 # planner.py
 

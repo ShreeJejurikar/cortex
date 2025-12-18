@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import list, ClassVar
+from typing import ClassVar
 
 # detector.py
 

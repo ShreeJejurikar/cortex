@@ -1,5 +1,6 @@
+from typing import Optional
+
 from intent.detector import Intent
-from typing import list, Optional
 
 # clarifier.py
 
@@ -10,7 +11,7 @@ class Clarifier:
     Returns a clarifying question if needed.
     """
 
-    def needs_clarification(self, intents: list[Intent], text: str) -> Optional[str]:
+    def needs_clarification(self, intents: list[Intent], text: str) -> str | None:
         text = text.lower()
 
         # 1. If user mentions "gpu" but has not specified which GPU → ask

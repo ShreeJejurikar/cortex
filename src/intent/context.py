@@ -1,5 +1,6 @@
+from typing import Optional
+
 from intent.detector import Intent
-from typing import list, Optional
 
 # context.py
 
