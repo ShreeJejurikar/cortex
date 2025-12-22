@@ -13,7 +13,6 @@ import socket
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
 from urllib.parse import quote
 
 import requests
@@ -57,7 +56,11 @@ class NetworkConfig:
         # Ensure cache directory exists
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        if auto_detect and not offline_mode:
+        # Skip detection if offline mode is enabled
+        if offline_mode:
+            self.is_online = False
+            self._detected = True
+        elif auto_detect:
             self.detect()
 
     def detect(self) -> None:
@@ -226,6 +229,7 @@ class NetworkConfig:
                 console.print("[dim] VPN connection detected[/dim]")
                 return True
         except (FileNotFoundError, subprocess.CalledProcessError):
+            # ip command not available or failed - continue to next check
             pass
 
         # Check routing table
@@ -235,6 +239,7 @@ class NetworkConfig:
                 console.print("[dim] VPN connection detected[/dim]")
                 return True
         except (FileNotFoundError, subprocess.CalledProcessError):
+            # Routing table check failed - assume no VPN
             pass
 
         return False
@@ -251,18 +256,18 @@ class NetworkConfig:
         Returns:
             True if internet is reachable
         """
-        # Quick DNS check first
-        original_timeout = socket.getdefaulttimeout()
+        # Quick TCP connection check (doesn't affect global socket timeout)
         try:
-            socket.setdefaulttimeout(timeout)
-            socket.gethostbyname("google.com")
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            sock.connect(("8.8.8.8", 53))  # Google DNS on port 53
+            sock.close()
             return True
-        except (TimeoutError, socket.gaierror):
+        except OSError:
+            # Connection failed - try HTTP endpoints
             pass
-        finally:
-            socket.setdefaulttimeout(original_timeout)
 
-        # Try multiple endpoints
+        # Try multiple HTTP endpoints
         test_urls = ["https://1.1.1.1", "https://8.8.8.8", "https://api.github.com"]
 
         for url in test_urls:
@@ -290,7 +295,7 @@ class NetworkConfig:
             if latency > 2:
                 return "slow"
             return "good"
-        except (requests.RequestException, requests.Timeout):
+        except requests.RequestException:
             return "offline"
 
     # === Configuration Methods ===
@@ -545,7 +550,8 @@ def check_proxy_auth(proxy_url: str, timeout: int = 5) -> str:
     except requests.exceptions.ProxyError as e:
         if "407" in str(e):
             return "auth_required"
-    except (requests.RequestException, requests.Timeout):
+    except requests.RequestException:
+        # Connection failed for other reasons
         pass
 
     return "failed"

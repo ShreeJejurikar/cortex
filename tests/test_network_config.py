@@ -248,33 +248,42 @@ class TestVPNDetection:
 class TestConnectivity:
     """Tests for connectivity checking."""
 
-    def test_check_connectivity_dns_success(self):
-        """Test connectivity check via DNS."""
+    def test_check_connectivity_socket_success(self):
+        """Test connectivity check via socket."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
-        with patch("socket.gethostbyname") as mock_dns:
-            mock_dns.return_value = "142.250.185.46"
+        with patch("socket.socket") as mock_socket:
+            mock_sock_instance = MagicMock()
+            mock_socket.return_value = mock_sock_instance
             result = config.check_connectivity()
             assert result is True
 
     def test_check_connectivity_fallback_to_http(self):
         """Test connectivity falls back to HTTP checks."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
-        with patch("socket.gethostbyname", side_effect=socket.gaierror()):
+        with patch("socket.socket") as mock_socket:
+            mock_sock_instance = MagicMock()
+            mock_sock_instance.connect.side_effect = OSError("Connection failed")
+            mock_socket.return_value = mock_sock_instance
+
             with patch("requests.head") as mock_head:
-                mock_head.return_value = Mock(status_code=200)
+                mock_head.return_value = MagicMock(status_code=200)
                 result = config.check_connectivity()
                 assert result is True
 
     def test_check_connectivity_offline(self):
         """Test connectivity check when offline."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
-        with patch("socket.gethostbyname", side_effect=socket.gaierror()):
+        with patch("socket.socket") as mock_socket:
+            mock_sock_instance = MagicMock()
+            mock_sock_instance.connect.side_effect = OSError("Network unreachable")
+            mock_socket.return_value = mock_sock_instance
+
             with patch("requests.head", side_effect=requests.RequestException()):
                 result = config.check_connectivity()
                 assert result is False
@@ -282,29 +291,29 @@ class TestConnectivity:
     def test_detect_network_quality_good(self):
         """Test network quality detection - good."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
         with patch("requests.head") as mock_head:
             with patch("time.time", side_effect=[0, 0.5]):  # 0.5s latency
-                mock_head.return_value = Mock(status_code=200)
+                mock_head.return_value = MagicMock(status_code=200)
                 result = config.detect_network_quality()
                 assert result == "good"
 
     def test_detect_network_quality_slow(self):
         """Test network quality detection - slow."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
         with patch("requests.head") as mock_head:
             with patch("time.time", side_effect=[0, 3]):  # 3s latency
-                mock_head.return_value = Mock(status_code=200)
+                mock_head.return_value = MagicMock(status_code=200)
                 result = config.detect_network_quality()
                 assert result == "slow"
 
     def test_detect_network_quality_offline(self):
         """Test network quality detection - offline."""
         with patch.object(NetworkConfig, "detect"):
-            config = NetworkConfig()
+            config = NetworkConfig(auto_detect=False)
 
         with patch("requests.head", side_effect=requests.RequestException()):
             result = config.detect_network_quality()
@@ -634,7 +643,10 @@ class TestIntegration:
     def test_full_detection_flow(self):
         """Test full detection flow with mocked system."""
         with patch.dict(os.environ, {"HTTP_PROXY": "http://proxy:8080"}):
-            with patch("socket.gethostbyname", return_value="1.1.1.1"):
+            with patch("socket.socket") as mock_socket:
+                mock_sock_instance = MagicMock()
+                mock_socket.return_value = mock_sock_instance
+
                 with patch("subprocess.check_output", return_value=b"eth0: UP"):
                     config = NetworkConfig()
 
