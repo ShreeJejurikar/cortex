@@ -99,10 +99,13 @@ class TestProxyDetection:
 
     def test_detect_env_proxy_uppercase_takes_priority(self):
         """Uppercase env vars should take priority over lowercase."""
-        with patch.dict(os.environ, {
-            "HTTP_PROXY": "http://uppercase:8080",
-            "http_proxy": "http://lowercase:8080",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "HTTP_PROXY": "http://uppercase:8080",
+                "http_proxy": "http://lowercase:8080",
+            },
+        ):
             with patch.object(NetworkConfig, "detect"):
                 config = NetworkConfig()
                 proxy = config._detect_env_proxy()
@@ -187,7 +190,9 @@ class TestProxyDetection:
             with patch.object(NetworkConfig, "detect"):
                 config = NetworkConfig()
 
-            with patch.object(config, "_detect_gnome_proxy", return_value={"http": "http://gnome-proxy:8080"}):
+            with patch.object(
+                config, "_detect_gnome_proxy", return_value={"http": "http://gnome-proxy:8080"}
+            ):
                 result = config.detect_proxy()
                 assert result["http"] == "http://env-proxy:8080"
 
@@ -581,7 +586,9 @@ class TestHelperFunctions:
     def test_check_proxy_auth_required(self):
         """Test proxy auth check - auth required."""
         with patch("requests.get") as mock_get:
-            mock_get.side_effect = requests.exceptions.ProxyError("407 Proxy Authentication Required")
+            mock_get.side_effect = requests.exceptions.ProxyError(
+                "407 Proxy Authentication Required"
+            )
             result = check_proxy_auth("http://proxy:8080")
             assert result == "auth_required"
 
@@ -648,12 +655,15 @@ class TestIntegration:
                 mock_socket.return_value = mock_sock_instance
 
                 with patch("subprocess.check_output", return_value=b"eth0: UP"):
-                    config = NetworkConfig()
+                    with patch("requests.head") as mock_head:
+                        mock_head.return_value = MagicMock(status_code=200)
 
-                    assert config.proxy is not None
-                    assert config.proxy["http"] == "http://proxy:8080"
-                    assert config.is_online is True
-                    assert config.is_vpn is False
+                        config = NetworkConfig()
+
+                        assert config.proxy is not None
+                        assert config.proxy["http"] == "http://proxy:8080"
+                        assert config.is_online is True
+                        assert config.is_vpn is False
 
     def test_offline_mode_integration(self):
         """Test complete offline mode flow."""
@@ -667,6 +677,5 @@ class TestIntegration:
                 config = NetworkConfig(offline_mode=True)
                 config.auto_configure()
 
-                # Should be able to get cached packages
                 cached = config.get_cached_packages()
                 assert cached == ["nginx", "docker"]

@@ -35,7 +35,9 @@ class NetworkConfig:
     - Connectivity testing
     """
 
-    def __init__(self, force_proxy: str | None = None, offline_mode: bool = False, auto_detect: bool = True):
+    def __init__(
+        self, force_proxy: str | None = None, offline_mode: bool = False, auto_detect: bool = True
+    ):
         """
         Initialize network configuration.
 
@@ -330,7 +332,9 @@ Acquire::https::Proxy "{https_proxy}";
                 stdout=subprocess.DEVNULL,
                 check=True,
             )
-            console.print(f"[green] Configured apt for proxy: HTTP={http_proxy}, HTTPS={https_proxy}[/green]")
+            console.print(
+                f"[green] Configured apt for proxy: HTTP={http_proxy}, HTTPS={https_proxy}[/green]"
+            )
             return True
         except (subprocess.CalledProcessError, PermissionError) as e:
             console.print(f"[yellow] Could not configure apt proxy: {e}[/yellow]")
@@ -347,7 +351,9 @@ Acquire::https::Proxy "{https_proxy}";
         os.environ["HTTP_PROXY"] = http_proxy
         os.environ["HTTPS_PROXY"] = https_proxy
 
-        console.print(f"[green] Configured pip for proxy: HTTP={http_proxy}, HTTPS={https_proxy}[/green]")
+        console.print(
+            f"[green] Configured pip for proxy: HTTP={http_proxy}, HTTPS={https_proxy}[/green]"
+        )
 
     def get_httpx_proxy_config(self) -> dict | None:
         """
@@ -384,10 +390,13 @@ Acquire::https::Proxy "{https_proxy}";
 
         try:
             with open(cache_file, "w") as f:
-                json.dump({
-                    "packages": packages,
-                    "cached_at": time.time(),
-                }, f)
+                json.dump(
+                    {
+                        "packages": packages,
+                        "cached_at": time.time(),
+                    },
+                    f,
+                )
             logger.debug(f"Cached {len(packages)} packages to {cache_file}")
         except OSError as e:
             logger.warning(f"Could not cache package list: {e}")
@@ -482,9 +491,7 @@ Acquire::https::Proxy "{https_proxy}";
                 "[yellow]⚠️ No internet connection detected - attempting offline mode[/yellow]"
             )
             if not self.enable_offline_fallback():
-                console.print(
-                    "[red]No cached packages available. Some operations may fail.[/red]"
-                )
+                console.print("[red]No cached packages available. Some operations may fail.[/red]")
             return
 
         # If proxy detected, configure tools
@@ -587,8 +594,8 @@ def add_proxy_auth(proxy_url: str, username: str, password: str) -> str:
         Proxy URL with embedded, URL-encoded credentials
     """
     # URL-encode credentials to handle special characters (@, :, /, %, etc.)
-    encoded_username = quote(username, safe='')
-    encoded_password = quote(password, safe='')
+    encoded_username = quote(username, safe="")
+    encoded_password = quote(password, safe="")
 
     logger.warning("Embedding credentials in proxy URL - ensure logs are secured")
 
