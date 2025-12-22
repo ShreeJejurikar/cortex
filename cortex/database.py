@@ -21,6 +21,12 @@ class SuggestionDatabase:
     """
 
     def __init__(self, db_path: str | None = None):
+        """Initialize the database from a JSON file.
+
+        Args:
+            db_path: Optional path to suggestions.json. If not provided,
+                     searches standard locations.
+        """
         self.db_path = db_path or self._find_database()
         self._data: dict[str, Any] = {}
         self._intents: list[dict] = []
@@ -98,22 +104,27 @@ class SuggestionDatabase:
 
     @property
     def intents(self) -> list[dict]:
+        """List of intent definitions."""
         return self._intents
 
     @property
     def languages(self) -> list[dict]:
+        """List of language definitions."""
         return self._languages
 
     @property
     def stacks(self) -> list[dict]:
+        """List of package stack definitions."""
         return self._stacks
 
     @property
     def packages(self) -> list[dict]:
+        """List of individual package definitions."""
         return self._packages
 
     @property
     def aliases(self) -> dict[str, list[str]]:
+        """Mapping of alias keywords to intent IDs."""
         return self._aliases
 
     # === Lookup Methods ===

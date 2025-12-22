@@ -22,6 +22,11 @@ class SuggestionTUI:
     """Interactive TUI for package suggestions."""
 
     def __init__(self, db: PackageDatabase):
+        """Initialize the TUI with a package database.
+
+        Args:
+            db: PackageDatabase instance for searching.
+        """
         self.db = db
         self.matcher = FuzzyMatcher(db)
         self.results: list[dict] = []

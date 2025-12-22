@@ -71,6 +71,11 @@ class IntentMatcher:
     }
 
     def __init__(self, db: SuggestionDatabase):
+        """Initialize the matcher with a database.
+
+        Args:
+            db: SuggestionDatabase instance to search.
+        """
         self.db = db
         self._build_keyword_index()
 
