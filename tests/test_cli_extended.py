@@ -280,7 +280,7 @@ class TestCortexCLIExtended(unittest.TestCase):
         mock_install.return_value = 0
         result = main()
         self.assertEqual(result, 0)
-        mock_install.assert_called_once_with("docker", execute=False, dry_run=False, parallel=False)
+        mock_install.assert_called_once_with("docker", execute=False, dry_run=False)
 
     @patch("sys.argv", ["cortex", "install", "docker", "--execute"])
     @patch("cortex.cli.CortexCLI.install")
@@ -288,7 +288,7 @@ class TestCortexCLIExtended(unittest.TestCase):
         mock_install.return_value = 0
         result = main()
         self.assertEqual(result, 0)
-        mock_install.assert_called_once_with("docker", execute=True, dry_run=False, parallel=False)
+        mock_install.assert_called_once_with("docker", execute=True, dry_run=False)
 
     @patch("sys.argv", ["cortex", "install", "docker", "--dry-run"])
     @patch("cortex.cli.CortexCLI.install")
@@ -296,7 +296,7 @@ class TestCortexCLIExtended(unittest.TestCase):
         mock_install.return_value = 0
         result = main()
         self.assertEqual(result, 0)
-        mock_install.assert_called_once_with("docker", execute=False, dry_run=True, parallel=False)
+        mock_install.assert_called_once_with("docker", execute=False, dry_run=True)
 
     def test_spinner_animation(self) -> None:
         initial_idx = self.cli.spinner_idx
