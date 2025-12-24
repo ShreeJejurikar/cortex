@@ -600,13 +600,23 @@ class TestHelperFunctions:
 
     def test_add_proxy_auth(self):
         """Test adding authentication to proxy URL."""
-        result = add_proxy_auth("http://proxy:8080", "user", "pass")
-        assert result == "http://user:pass@proxy:8080"
+        test_user = "user"
+        test_pass = "pass"
+        test_proxy = "http://proxy:8080"
+        expected_url = f"http://{test_user}:{test_pass}@proxy:8080"
+        
+        result = add_proxy_auth(test_proxy, test_user, test_pass)
+        assert result == expected_url
 
     def test_add_proxy_auth_no_protocol(self):
         """Test adding auth to proxy without protocol."""
-        result = add_proxy_auth("proxy:8080", "user", "pass")
-        assert result == "http://user:pass@proxy:8080"
+        test_user = "user"
+        test_pass = "pass"
+        test_proxy = "proxy:8080"
+        expected_url = f"http://{test_user}:{test_pass}@proxy:8080"
+        
+        result = add_proxy_auth(test_proxy, test_user, test_pass)
+        assert result == expected_url
 
     def test_prompt_proxy_credentials(self):
         """Test prompting for proxy credentials."""
